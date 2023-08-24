@@ -141,30 +141,32 @@ match_key = 0
 
 for i in range(len(open_datas)):
     for x in range(len(open_datas)):
-        embedding_vector1 = open_datas[i]['embedding']
-        embedding_vector2 = open_datas[x]['embedding']
-        similarity_score = cosine_similarity(embedding_vector1, embedding_vector2) # 比較標題相似性
-        # score_datas[].append({'embedding_vector1':i, 'embedding_vector2':x, 'similarity_score':similarity_score})
-        if similarity_score >= 0.9 and similarity_score < 1:
-            for k in score_datas:
-                if k == open_datas[i]['title'] + open_datas[x]['title'] or k == open_datas[x]['title'] + open_datas[i]['title']:
-                    match_key = 1
-            if match_key == 0:
-                score_datas[open_datas[i]['title'] + open_datas[x]['title']] = {
-                    'i': open_datas[i], 'x': open_datas[x]
-                }
-            else:
-                match_key = 0
+        if open_datas[x]['title'] not in score_datas:
+            embedding_vector1 = open_datas[i]['embedding']
+            embedding_vector2 = open_datas[x]['embedding']
+            similarity_score = cosine_similarity(embedding_vector1, embedding_vector2) # 比較標題相似性
+            if similarity_score >= 0.9 and similarity_score < 0.9999999999999999:
+                # 判斷該score_datas是否有該i的title
+                if open_datas[i]['title'] not in score_datas:
+                    # 若無則宣告
+                    score_datas[open_datas[i]['title']] = {'data':{}, 'match_datas':[]}
+                    score_datas[open_datas[i]['title']]['data'] = open_datas[i]
+                # 把該x資料加入到score_datas
+                score_datas[open_datas[i]['title']]['match_datas'].append(open_datas[x])
 
 new_datas = []
 for key, value in score_datas.items():
-    page_json_i = get_article_content(value['i']['link'])
-    page_json_x = get_article_content(value['x']['link'])
-    detail = gen_ai_result("把以下內容整理為約300字以內的新聞文章「" + page_json_i['description'] + "。" + page_json_x['description'] + "」")
+    page_json_i = get_article_content(value['data']['link'])
+    description = page_json_i['description']
+    datas_source = "資料來源：" + value['data']['link'] + "(" + value['data']['title']  + ")"
+    for x in range(len(value['match_datas'])):
+        page_json_x = get_article_content(value['match_datas'][x]['link'])
+        description +=  page_json_x['description']
+        datas_source += "資料來源：" + value['match_datas'][x]['link'] + "(" + value['match_datas'][x]['title']  + ")"
+    detail = gen_ai_result("把以下內容整理為約300字以內的新聞文章「" + description + "」")
     kayword = gen_ai_result("依照以下內容整理出5個以下的關鍵詞「" + detail + "」")
     title = "[ 每日AI讀報 ] " + gen_ai_result("把以下內容下一個新聞標題「" + detail + "」")
     detail += "關鍵字：" + kayword
-    detail += "資料來源：" + value['i']['link'] + "(" + value['i']['title']  + ")"
-    detail += "資料來源：" + value['x']['link'] + "(" + value['x']['title']  + ")"
+    detail += datas_source
     send_email(title, detail)
 
