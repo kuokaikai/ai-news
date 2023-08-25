@@ -12,6 +12,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
+
+# 设置您的API密钥
+api_key = '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'
+
 def send_email(subject, message):
     # 邮件配置
     smtp_server = 'smtp.gmail.com'  # SMTP服务器地址
@@ -70,8 +74,6 @@ def get_article_content(url):
         print(f"无法访问网页，状态码: {response.status_code}")
 
 def gen_ai_result(prompt):
-    # 设置您的API密钥
-    api_key = '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'
 
     # 初始化OpenAI客户端
     openai.api_key = api_key
@@ -108,7 +110,7 @@ def request_open_ai(text):
     url = "https://api.openai.com/v1/embeddings"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer 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"  # 替换为你的OpenAI API密钥
+        "Authorization": "Bearer " + api_key  # 替换为你的OpenAI API密钥
     }
     data = {
         "input": text,
